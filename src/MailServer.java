@@ -1,4 +1,3 @@
-
 import java.net.*;
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -15,12 +14,14 @@ public class MailServer {
             dir.mkdirs();
         }
 
+        // Khởi tạo DatagramSocket
         try (DatagramSocket socket = new DatagramSocket(PORT)) {
             System.out.println("UDP Mail Server started on port " + PORT);
             byte[] buffer = new byte[65535];
 
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                // nhận gói tin UDP
                 socket.receive(packet);
 
                 // Process request in a new thread
@@ -51,7 +52,7 @@ public class MailServer {
                     } else {
                         userDir.mkdirs();
                         String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-                        String content = user + "+" + password + "+" + date + "+Thank you for using this service. we hope that you will feel comfortable.";
+                        String content = "\nuser: "+ user + "\npassword: " + password + "\ndate and time: " + date + "\n Thank you for using this service. we hope that you will feel comfortable.";
                         try (FileWriter writer = new FileWriter(new File(userDir, "new_email.txt"))) {
                             writer.write(content);
                         }
@@ -59,19 +60,27 @@ public class MailServer {
                     }
                 }
             } else if (command.equals("SEND")) {
-                if (parts.length < 3) {
-                    response = "ERROR|Missing recipient or content";
+                if (parts.length < 4) {
+                    response = "ERROR|Missing sender, recipient, or content";
                 } else {
-                    String recipient = parts[1];
-                    String content = parts[2];
+                    String sender = parts[1];
+                    String recipient = parts[2];
+                    String content = parts[3];
                     File recipientDir = new File(MAILBOX_DIR, recipient);
 
                     if (!recipientDir.exists()) {
                         response = "ERROR|Recipient does not exist";
                     } else {
                         String filename = "email_" + System.currentTimeMillis() + ".txt";
+                        String senderIP = packet.getAddress().getHostAddress();
+                        String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+                        String emailContent = "From: " + sender + "\n" +
+                                "IP: " + senderIP + "\n" +
+                                "Date: " + date + "\n" +
+                                "Content: " + content;
+
                         try (FileWriter writer = new FileWriter(new File(recipientDir, filename))) {
-                            writer.write(content);
+                            writer.write(emailContent);
                         }
                         response = "OK|Email sent";
                     }

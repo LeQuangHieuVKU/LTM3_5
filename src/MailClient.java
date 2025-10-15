@@ -192,13 +192,14 @@ public class MailClient {
         });
 
         sendButton.addActionListener(e -> {
+            String sender = userField.getText();
             String recipient = recipientField.getText();
             String content = contentArea.getText();
-            if (recipient.isEmpty() || content.isEmpty()) {
-                appendOutput("ERROR|Recipient and content cannot be empty", false);
+            if (sender.isEmpty() || recipient.isEmpty() || content.isEmpty()) {
+                appendOutput("ERROR|Sender, recipient, and content cannot be empty", false);
                 return;
             }
-            String request = "SEND|" + recipient + "|" + content;
+            String request = "SEND|" + sender + "|" + recipient + "|" + content;
             String response = sendRequest(request);
             appendOutput(response, response.startsWith("OK"));
             if (response.startsWith("OK")) {
@@ -323,6 +324,7 @@ public class MailClient {
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, address, PORT);
             socket.send(sendPacket);
 
+            // Nhận phản hồi UDP
             byte[] receiveData = new byte[65535];
             DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
             socket.setSoTimeout(5000);
